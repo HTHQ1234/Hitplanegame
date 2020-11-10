@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    * {
+      margin: 0;
+      text-align: center;
+    }
+
+    #video {
+      height: 50px;
+      width: 456px;
+    }
+
+    #canvas {
+      box-shadow: 0 0 10px #333;
+      margin-top: 30px;
+      display: block;
+      margin: auto;
+    }
+
+    #heroCanvas {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-228px)translateY(-415px);
+      top: 50%;
+    }
+
+    #bulletCanvas {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-228px)translateY(-415px);
+      top: 50%;
+    }
+
+    #enemyCanvas {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-228px)translateY(-415px);
+      top: 50%;
+    }
+  </style>
+</head>
+
+<body onload="drawAirplane()">
+  <video id="video" src="./mp3/1.mp3" controls autoplay playsinline></video>
+  <canvas id="canvas" width="456" height="809"></canvas>
+  <canvas id="heroCanvas" width="456" height="809"></canvas>
+  <canvas id="bulletCanvas" width="456" height="809"></canvas>
+  <canvas id="enemyCanvas" width="456" height="809"></canvas>
+  <script src="./JS/background.js"></script>
+  <script src="./JS/hero.js"></script>
+  <script src="./JS/bullet.js"></script>
+  <script src="./JS/enemy.js"></script>
+  <script>
+    function drawAirplane() {
+      var bgCanvas = document.querySelector('#canvas');
+
+      if (bgCanvas.getContext) {
+        var y = 0;
+        var bgURL = './img/2.jpg';
+
+        //1.加载图片的方法
+        loadBackground(bgURL, bgCanvas, moveBackground);
+
+        function moveBackground(bgImage) {
+          /* var bgSound = new Audio('./mp3/1.mp3');
+          bgSound.loop = true; //设置音乐循环
+          bgSound.play(); */
+
+          setInterval(() => {
+            //执行速度
+            var speed = 5;
+            //执行方法
+            animateBackground(bgCanvas, bgImage, 3);
+          }, 30);
+
+          //主角出场
+          var heroCanvas = document.querySelector('#heroCanvas');
+          var ctx = heroCanvas.getContext('2d');
+
+          var img = './img/hero.png';
+
+          var hero = createHero(102, 126, heroCanvas, img, heroLoaded);
+
+          function heroLoaded(image) {
+            hero.draw(heroCanvas);
+          }
+
+          //飞机动起来
+          setInterval(() => {
+            ctx.clearRect(0, 0, heroCanvas.width, heroCanvas.height);
+            hero.draw(heroCanvas);
+          }, 30);
+
+          //让子弹飞
+          var bCanvas = document.querySelector('#bulletCanvas');
+          var bContext = bCanvas.getContext('2d');
+
+          var bWidth = 70;
+          var bHeight = 11;
+
+          var bURL = './img/bullet.png';
+          var bulletArray = new Array();
+
+          setInterval(() => {
+            var bullet = createBullet(bWidth, bHeight, bURL, hero);
+            bulletArray.push(bullet);
+            bullet.draw(bCanvas);
+            //console.log(bulletArray.length);
+          }, 200);
+
+          setInterval(() => {
+            //清除画布
+            bContext.clearRect(0, 0, bCanvas.width, bCanvas.height);
+
+            for (var i = 0; i < bulletArray.length; i++) {
+
+              //判断子弹是否出屏，出去的子弹，从数组中除去
+              if (bulletArray[i].isOutOfScreen()) {
+                bulletArray.splice(i, 1);
+              }
+
+              bulletArray[i].move();
+              bulletArray[i].draw(bCanvas);
+
+              //循环敌机
+              for (var j = 0; j < enemyArray.length; j++) {
+                if (isEnemyHitHero(bulletArray[i], enemyArray[j])) {
+                  //enemyArray[j].crash();
+                  /* enemyArrayP[j].x = 150;
+                  setTimeout(() => {
+                      enemyArray.splice(j, 1);
+                  }, 2000); */
+                  enemyArray.splice(j, 1);
+                  bulletArray.splice(i, 1);
+                }
+              }
+            }
+          }, 20);
+
+          //创建敌机
+          var eCanvas = document.querySelector('#enemyCanvas');
+          var eContext = eCanvas.getContext('2d');
+          var enemyArray = new Array();
+
+          setInterval(() => { //循环创建敌机
+
+            var number = getRandForNum(1, 3); //随机获取1到3，产生不同的敌机类型
+            var enemy;
+            switch (number) {
+              case 1:
+                enemy = createEnemy(52, 40, './img/enemy1.png', eCanvas);
+                break;
+              case 2:
+                enemy = createEnemy(137.5, 201, './img/enemy2.png', eCanvas);
+                break;
+              case 3:
+                enemy = createEnemy(69, 94, './img/enemy3.png', eCanvas);
+                break;
+            }
+
+            enemyArray.push(enemy);
+            for (var i = 0; i < enemyArray.length; i++) {
+              enemyArray[i].draw(eCanvas);
+            }
+            console.log(enemyArray.length);
+          }, 1000);
+
+          //让敌机降落
+          var eTimer = setInterval(() => {
+            eContext.clearRect(0, 0, eCanvas.width, eCanvas.height);
+
+            for (var i = 0; i < enemyArray.length; i++) {
+              enemyArray[i].move();
+              enemyArray[i].draw(eCanvas);
+
+              //碰撞检测
+              if (isEnemyHitHero(enemyArray[i], hero)) {
+                clearInterval(eTimer);
+                eTimer = null;
+                alert('Game Over!');
+              }
+
+              //判断敌机是否出屏
+              if (enemyArray[i].isOutOfScreen(eCanvas)) {
+                enemyArray.splice(i, 1);
+              }
+            }
+
+          }, 50);
+        }
+      }
+    }
+  </script>
+</body>
+
+</html>
